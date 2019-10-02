@@ -145,8 +145,12 @@ def saveWorry(obj = Item(),temp_path = "D:\\mylist\\Worries.txt"):
                 break
 
             elif int(line[0]) < int(temp_idl[0]):
-                dist = int(line[0:3])
-                i+=dist
+                dist = int(line[1:3])
+                if dist == 0:
+                    content.insert(i+1,obj.getInfoLine())
+                    break
+                else:
+                    i+=dist
 #Improvements
         file.seek(0,0)
         for line in content :
@@ -336,7 +340,7 @@ def add_days_worries():
     print("Frequency (In days)\n")
     freq = input()
     tod = str( datetime.date.today() )
-    obj = Item(name,int(tod[:5]),int(tod[5:8]),int(tod[8:]),freq)
+    obj = Item(name,int(tod[:4]),int(tod[5:7]),int(tod[8:]),freq)
 
     file = open(path_var+"\\"+tod+".txt","a+")
     file.write(obj.getInfoLine())
@@ -432,10 +436,10 @@ def main():
         print_Today()
         print("****\n1)Worry for today\n2)Add a worry\n")
         inp = input()
-        if inp == 1:
+        if inp == "1":
             add_days_worries()
-        elif inp == 2:
+        elif inp == "2":
             lets_get_started()
 
-#if __name__ == "__main__":
- #   main()
+if __name__ == "__main__":
+    main()
