@@ -21,21 +21,21 @@ path_var = __file__
 name_Dir = "myList"
 name_txt = "\\Worries.txt"
 
+def has_no_more(arr = [],pos = 0):
+    try :
+        pos = arr[pos+1]
+        return True
+    except:
+         return False
+
 def set_Up_pathvar():
     global path_var
-    p = pathlib.PureWindowsPath(path_var)
-    arr = []
-
-    for i in p.parts:
-        arr.append(i)
-
-    arr.pop()
-    path_var = arr.pop(0)
-    for i in arr:
-        path_var += i + '\\'
-
-    path_var += name_Dir
-
+    mpath = path_var.split("\\")
+    path_var = ""
+    mpath.pop(len(mpath)-1)
+    for word in mpath:
+        path_var = path_var + word + "\\"
+    path_var = path_var + name_Dir
 #Create the txt for worries
 def createWorryFile(temp_path = "D:\\mylist\\Worries.txt"):
 
@@ -158,11 +158,13 @@ def saveWorry(obj = Item(),temp_path = "D:\\mylist\\Worries.txt"):
 
 
     file.close()
+    return obj
 
 
 #*************************************************************
 #needs Improvements
 #*************************************************************
+#set the frequency inside the main file
 def Modify_Frequency(obj = Item()):
     global path_var
     global name_txt
@@ -171,6 +173,7 @@ def Modify_Frequency(obj = Item()):
     content = file.readlines()
     obj.find_Idl()
     temp_id = obj.getIdl()
+    toret = ""
 
     for i in range(1,len(content)):
         line = content[i]
@@ -180,12 +183,12 @@ def Modify_Frequency(obj = Item()):
             if obj.getName() in line:
 
                 if line[14:17] == obj.getFreq():
-                     break
+                     return line[14:17]
 
                 else:
+                    toret = line[14:17]
                     line = obj.getInfoLine()
                     break
-
             else:
                 pass
 
@@ -205,8 +208,7 @@ def Modify_Frequency(obj = Item()):
         file.write(line)
 
     file.close()
-
-
+    return toret
 
 
 #GETTING STUFF
@@ -216,6 +218,8 @@ def check_date(line = ""):
 
     tod = str( datetime.date.today() )
     dat = line[4:14]
+    if tod == dat:
+        return True
     freq = line[15:17]
     sum = 0
     m_distance = int(tod[5:7]) - int(dat[5:7])
@@ -282,7 +286,7 @@ def funtction_I():
         try :
             saveWorry(obj,path_var+name_txt)
             return True
-        except :
+        except CollissionException:
             print("Item already exists are u sure you want to replace it? (y/n)")
             return False
 
@@ -295,8 +299,21 @@ def print_Today():
 
     if os.path.exists(path_var + "\\" + tod + ".txt"):
         #print the worries that exist
+        tod_worries = getTWorries()
         file = open(path_var + "\\" + tod + ".txt","r+")
         content = file.readlines()
+        #in case something is not inside today's worries
+        if len(content[1:])<len(tod_worries):
+
+            tod_worries.insert(0,content[0])
+            content = tod_worries
+            file.seek(0,0)
+
+            for line in content:
+                file.write(line)
+        else:
+            pass
+
         for line in content:
             print(line)
 
@@ -331,9 +348,11 @@ def print_Today():
         for line in tod_worries:
             print(line)
 
+
 def add_days_worries():
     global path_var
     global name_txt
+    set_Up_pathvar()
 
     print("Name\n")
     name = input()
@@ -341,34 +360,39 @@ def add_days_worries():
     freq = input()
     tod = str( datetime.date.today() )
     obj = Item(name,int(tod[:4]),int(tod[5:7]),int(tod[8:]),freq)
+    sum = 0
 
-    file = open(path_var+"\\"+tod+".txt","a+")
-    file.write(obj.getInfoLine())
-    file.close()
-
-    try:
-        saveWorry(path_var+name_txt)
-    except:
-        print("A collision occured.Do you want to recalculate frequency? (y/n)\n")
+    try :
+        saveWorry(obj,path_var+name_txt)
+    except CollissionException:
+        print("A Collission Occured.Do You Want To Recalculate Frequency? (y/n)\n")
         inp = input()
-        sum = 0
-        if inp == "y" or inp =="Y":
-            if os.path.exists(path_var+obj.getName()+".txt"):
-                file = open(path_var+obj.getName()+".txt","r+")
-                content = file.readlines()
-                if len(content) >= 10:
-                    for fr in content:
-                        sum += int(fr)
-                    sum = round(sum/10)
-                    file.seek(0,0)
-                    file.write(str(sum))
-                    file.close()
-                    Modify_Frequency(obj)
-            else:
-                file = open(path_var+obj.getName()+".txt","w+")
-                file.write( str( obj.getFreq() ) )
-                file.close()
+        if inp == "y" or inp == "Y":
 
+            if not os.path.exists(path_var+"\\"+obj.getName()+".txt"):
+                toret = Modify_Frequency(obj)
+                file = open(path_var+"\\"+obj.getName()+".txt","w+")
+                file.write(toret+"\n")
+                file.write(obj.getFreq()+"\n")
+                file.close()
+            else:
+                file = open(path_var+"\\"+obj.getName()+".txt","r+")
+                toret = Modify_Frequency()
+                file.write(toret+"\n")
+                content = file.readlines()
+                for line in content:
+                    sum+=int(line)
+                sum = round(sum/len(content))
+                obj.setFreq(sum)
+                file.close()
+                if len(content) == 10:
+                    os.remove(path_var+"\\"+obj.getName()+".txt")
+                else:
+                    pass
+        else:
+            return 0
+
+        Modify_Frequency(obj)
 
 
 #*******************************************************************************
@@ -386,7 +410,6 @@ def lets_get_started():
     global path_var
     global name_txt
 #Set the path correctly
-    temp_path = path_var+name_txt
 
     print("Have Any Worries? (y/n)\n")
     inp = input()
@@ -402,12 +425,20 @@ def lets_get_started():
         m = input()
         print("Day\n")
         d = input()
+        print("Any idea about the frequency? (y/n)\n")
+        freq = 0
+        inp = input()
 
-        obj = Item(name,int(y),int(m),int(d))
+        if inp == "y":
+            print("Give me the moves\n")
+            freq = input()
+        else:
+            pass
+
+        obj = Item(name,int(y),int(m),int(d),freq)
         #it is sure that an Exception isn't going to be raised
-        saveWorry(obj,temp_path)
+        saveWorry(obj,path_var+name_txt)
         #return True
-
     else:
         pass
         #return False
