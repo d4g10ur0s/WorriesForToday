@@ -1,7 +1,9 @@
 import datetime
 import pathlib
 import os
-
+#Bugs
+#frequency txt
+#next frequency doesnt occur
 #my Exceptions
 class NotADateException(Exception):
     pass
@@ -24,9 +26,9 @@ name_txt = "\\Worries.txt"
 def has_no_more(arr = [],pos = 0):
     try :
         pos = arr[pos+1]
-        return True
+        return False
     except:
-         return False
+         return True
 
 def set_Up_pathvar():
     global path_var
@@ -73,12 +75,15 @@ class Item:
             self.fr = None
             self.fr = str(0) + str(fr)
 
+    def setDate(self,y=2019,m=1,d=1):
+        self.last_occur = str(datetime.date(y,m,d))
+    def getDate(self):
+        return self.last_occur
+
 #Saving stuff
 
     def getIdl(self):
         return self.idl
-    def setIdl(self,idl = ""):
-        self.idl = idl
     def getName(self):
         return self.name
     def getFreq(self):
@@ -101,14 +106,6 @@ class Item:
 #*******************************************************************************
 #SAVING STUFF
 #save a Worry in a file
-def hash_no_more(content = [], i = 0):
-    try :
-        a = content[i+1]
-        return False
-    except :
-        return True
-
-
 
 def saveWorry(obj = Item(),temp_path = "D:\\mylist\\Worries.txt"):
 
@@ -209,6 +206,24 @@ def Modify_Frequency(obj = Item()):
 
     file.close()
     return toret
+
+def setNextDate(obj = Item()):
+    month_dir = [31,[28,30],31,30,31,30,31,31,30,31,30,31]
+    fr = int(obj.getFreq())
+    dat = obj.getDate().split("-")
+    dat[2] = int(dat[2]) + int(fr)
+    dat[1] = int(dat[1])
+
+    if month_dir[int(dat[1])-1] < dat[2]:
+        dat[2] = dat[2] - month_dir[int(dat[1])-1]
+    else:
+        pass
+    if dat[1] >= 12:
+        dat[1] -= 12
+    else:
+        pass
+    obj.setDate(int(dat[0]),dat[1],dat[2])
+    return obj.getInfoLine()
 
 
 #GETTING STUFF
@@ -314,8 +329,10 @@ def print_Today():
         else:
             pass
 
-        for line in content:
-            print(line)
+        print(content[0])
+
+        for i in range(1,len(content)):
+            print(str(i) + ")" + content[i])
 
     else:
         #first time for today
@@ -345,8 +362,11 @@ def print_Today():
         file.seek(0,0)
         tod_worries = file.readlines()
 
+        counter = 0
+
         for line in tod_worries:
-            print(line)
+            print(str(counter)+")" +line)
+            counter+=1
 
 
 def add_days_worries():
@@ -393,6 +413,54 @@ def add_days_worries():
             return 0
 
         Modify_Frequency(obj)
+
+def change_line(line = ""):
+    global path_var
+    global name_txt
+    file = open(path_var+name_txt,"r+")
+    content = file.readlines()
+    for i in range(1,len(content)-1):
+        temp_idl = content[i]
+        temp_idl = temp_idl[:3]
+        if int(temp_idl[0]) > int(line[0]):
+            i = int(temp_idl[1:3])
+        elif line[:3] == temp_idl:
+            content[i] = line
+            break
+        else:
+            pass
+
+    file.seek(0,0)
+    for line in content:
+        file.write(line)
+    file.close()
+
+
+def worry_done():
+
+    global path_var
+    print("Number what worry\n")
+    pos = input()
+    tod = str(datetime.date.today())
+    file = open(path_var + "\\" + tod + ".txt" ,"r+")
+    content = file.readlines()
+    target = content.pop(int(pos))
+    file.seek(0,0)
+    for line in content:
+        file.write(line)
+    file.close()
+
+    target = target.split(" ")
+    temp_name = target[3]
+    temp_name = temp_name[:len(temp_name)-1]
+    obj = Item(temp_name)
+    obj.setFreq(int(target[2]))
+    obj.find_Idl()
+    target = setNextDate(obj)
+    change_line(target)
+
+
+
 
 
 #*******************************************************************************
@@ -465,12 +533,14 @@ def main():
     inp = ""
     while not(inp=="Close" or inp == "close"):
         print_Today()
-        print("****\n1)Worry for today\n2)Add a worry\n")
+        print("****\n1)Worry for today\n2)Add a worry\n3)Worry Done\n")
         inp = input()
         if inp == "1":
             add_days_worries()
         elif inp == "2":
             lets_get_started()
+        elif inp == "3":
+            worry_done()
 
 if __name__ == "__main__":
     main()
