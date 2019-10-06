@@ -282,7 +282,7 @@ def getTWorries():
             tod_arr.append(line)
         else:
             pass
-    return tod_arr[:]
+    return tod_arr
 #If Today Is Empty
 #Make Some Worries :( :( :(
 def funtction_I():
@@ -338,10 +338,8 @@ def print_Today():
         #first time for today
         createWorryFile(path_var + "\\" + tod + ".txt")
         tod_worries = getTWorries()
-        file = open(path_var + "\\" + tod + ".txt","a+")
 
         if len(tod_worries) == 0:
-            file.close()
             #funtction_I
             #There are no worries for Today
             if funtction_I():
@@ -362,11 +360,10 @@ def print_Today():
         file.seek(0,0)
         tod_worries = file.readlines()
 
-        counter = 0
+        print(tod_worries[0])
 
-        for line in tod_worries:
-            print(str(counter)+")" +line)
-            counter+=1
+        for i in range(1,len(tod_worries)):
+            print(str(i) + ")" + tod_worries[i])
 
 
 def add_days_worries():
@@ -419,11 +416,11 @@ def change_line(line = ""):
     global name_txt
     file = open(path_var+name_txt,"r+")
     content = file.readlines()
-    for i in range(1,len(content)-1):
+    for i in range(1,len(content)):
         temp_idl = content[i]
         temp_idl = temp_idl[:3]
-        if int(temp_idl[0]) > int(line[0]):
-            i = int(temp_idl[1:3])
+        if int(temp_idl[0]) < int(line[0]):
+            i += int(temp_idl[1:3])
         elif line[:3] == temp_idl:
             content[i] = line
             break
@@ -431,8 +428,7 @@ def change_line(line = ""):
             pass
 
     file.seek(0,0)
-    for line in content:
-        file.write(line)
+    file.writelines(content)
     file.close()
 
 
@@ -446,8 +442,8 @@ def worry_done():
     content = file.readlines()
     target = content.pop(int(pos))
     file.seek(0,0)
-    for line in content:
-        file.write(line)
+    file.writelines(content)
+    file.truncate()
     file.close()
 
     target = target.split(" ")
@@ -458,9 +454,6 @@ def worry_done():
     obj.find_Idl()
     target = setNextDate(obj)
     change_line(target)
-
-
-
 
 
 #*******************************************************************************
