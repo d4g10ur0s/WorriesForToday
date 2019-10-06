@@ -2,7 +2,6 @@ import datetime
 import pathlib
 import os
 #Bugs
-#frequency txt
 #next frequency doesnt occur
 #my Exceptions
 class NotADateException(Exception):
@@ -94,7 +93,7 @@ class Item:
         self.idl = str(self.idl)+"00"
 
     def configure_Idl(self,tim = 0):
-        self.idl = str( int(self.idl) + tim)
+        self.idl = str( int(self.idl) + tim + 1)
 
 
 
@@ -133,25 +132,30 @@ def saveWorry(obj = Item(),temp_path = "D:\\mylist\\Worries.txt"):
                 raise CollissionException
 
             if line[0] == temp_idl[0]:
-                obj.configure_Idl( int(line[0:3]) )
+                obj.configure_Idl( int(line[1:3]) )
                 content.insert(i,obj.getInfoLine())
                 break
 
-            elif int(line[0]) > int(temp_idl[0]) and has_no_more(content,i) :
-                content.insert(i,obj.getInfoLine())
+            elif int(line[0]) < int(temp_idl[0]) and has_no_more(content,i) :
+                content.append(obj.getInfoLine())
                 break
 
             elif int(line[0]) < int(temp_idl[0]):
                 dist = int(line[1:3])
                 if dist == 0:
-                    content.insert(i+1,obj.getInfoLine())
-                    break
+                    pass
                 else:
                     i+=dist
+            elif int(line[0]) > int(temp_idl[0]):
+                if not has_no_more(content,i) :
+                    content.insert( i, obj.getInfoLine())
+                else :
+                    content.append( obj.getInfoLine() )
+                break
+
 #Improvements
         file.seek(0,0)
-        for line in content :
-            file.write(line)
+        file.writelines(content)
 
 
     file.close()
@@ -245,8 +249,9 @@ def check_date(line = ""):
     elif m_distance>0:
 
         for i in range(0,m_distance):
+            step = int( dat[5:7] ) + i - 1
             #Get the days from the dictionary
-            sum = sum + month_dir[int( dat[5:7] ) + i - 1]
+            sum = sum + month_dir[step]
 
         sum += ( int(tod[8:]) - int(dat[8:]) )
 
