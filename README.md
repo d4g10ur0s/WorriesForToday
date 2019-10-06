@@ -1,3 +1,3 @@
 
 # A System To Remind Your Worries...
-#Bugs On: delete a worry that is done.
+#Bugs On: new frequencies.
