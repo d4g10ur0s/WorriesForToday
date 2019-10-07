@@ -83,6 +83,8 @@ class Item:
 
     def getIdl(self):
         return self.idl
+    def setIdl(self,idl = ""):
+        self.idl = idl
     def getName(self):
         return self.name
     def getFreq(self):
@@ -101,6 +103,26 @@ class Item:
     def getInfoLine(self):
         #        3         1      10              1       2        1    4 + ??          1
         return self.idl + " " +self.last_occur + " " + self.fr + " " + self.name + "\n"
+
+def set_up_an_obj_by_line(cont = [],dat = ""):
+    temp_name = ""
+    for i in range(3,len(cont)):
+        if has_no_more(cont,i):
+            for j in range(0,i-3):
+                temp_name += cont[3+j]+" "
+        else:
+            pass
+    temp_name = temp_name[:len(temp_name)-2]
+    obj = Item(temp_name)
+    obj.setFreq(int(cont[2]))
+    if len(dat) == 0:
+        obj.setDate(cont[1])
+    else:
+        obj.setDate(dat)
+    obj.setIdl(cont[0])
+    return obj
+
+
 
 #*******************************************************************************
 #SAVING STUFF
@@ -452,15 +474,53 @@ def worry_done():
     file.close()
 
     target = target.split(" ")
-    temp_name = target[3]
-    temp_name = temp_name[:len(temp_name)-1]
-    obj = Item(temp_name)
-    obj.setFreq(int(target[2]))
-    obj.find_Idl()
+    obj = set_up_an_obj_by_line(target)
     target = setNextDate(obj)
     change_line(target)
+#returns an array with lines for today
+def update_yesterday(ppath = ""):
+    file = open(ppath,"r+")
+    content = file.readlines()
+    if len(content) == 1:
+        content = []
+    else:
+        content.pop(1)
+        for line in content:
+            obj = line.split(" ")
+            obj = set_up_an_obj_by_line(obj, str( datetime.date.today() ) )
+            line = obj.getInfoLine()
+    file.close()
+    os.remove(ppath)
+    return content
 
 
+def yesgono():
+    global path_var
+    month_dir = [31,[28,30],31,30,31,30,31,31,30,31,30,31]
+
+    tod = str(datetime.date.today())
+    yday = int(tod[8:])-1
+    if yday>0:
+        ymonth = int(tod[5:7])
+        yyear = int(tod[:4])
+    else:
+        ymonth = int(tod[5:7]) - 1
+        yday = int(month_dir[ymonth])
+        if ymonth>0:
+            yyear = int(tod[:4])
+        else:
+            yyear = int(tod[5:7])-1
+    yesterday = str( datetime.date(yyear,ymonth,yday) )
+
+    if os.path.exists(path_var+"\\"+yesterday+".txt"):
+        objs = update_yesterday(path_var+"\\"+yesterday+".txt")
+        if not (len(objs) == 0):
+            for obj in objs:
+                change_line(obj)
+        else:
+            pass
+    else:
+        pass
 #*******************************************************************************
 
 
@@ -530,6 +590,7 @@ def main():
 
     inp = ""
     while not(inp=="Close" or inp == "close"):
+        yesgono()
         print_Today()
         print("****\n1)Worry for today\n2)Add a worry\n3)Worry Done\n")
         inp = input()
