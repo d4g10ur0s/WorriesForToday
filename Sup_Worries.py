@@ -4,6 +4,8 @@ import os
 #Bugs
 #next frequency doesnt occur
 #my Exceptions
+#Notes for the future
+#****for each item that is stored i already have its idl****
 class NotADateException(Exception):
     pass
 
@@ -74,6 +76,9 @@ class Item:
             self.fr = None
             self.fr = str(0) + str(fr)
 
+    def ssetDate(self,st = ""):
+        self.last_occur = st
+
     def setDate(self,y=2019,m=1,d=1):
         self.last_occur = str(datetime.date(y,m,d))
     def getDate(self):
@@ -108,7 +113,7 @@ def set_up_an_obj_by_line(cont = [],dat = ""):
     temp_name = ""
     for i in range(3,len(cont)):
         if has_no_more(cont,i):
-            for j in range(0,i-3):
+            for j in range(0,i-3+1):
                 temp_name += cont[3+j]+" "
         else:
             pass
@@ -116,9 +121,9 @@ def set_up_an_obj_by_line(cont = [],dat = ""):
     obj = Item(temp_name)
     obj.setFreq(int(cont[2]))
     if len(dat) == 0:
-        obj.setDate(cont[1])
+        obj.ssetDate(cont[1])
     else:
-        obj.setDate(dat)
+        obj.ssetDate(dat)
     obj.setIdl(cont[0])
     return obj
 
@@ -194,11 +199,12 @@ def Modify_Frequency(obj = Item()):
 
     file = open(path_var+name_txt,"r+")
     content = file.readlines()
+    content.pop(0)
     obj.find_Idl()
     temp_id = obj.getIdl()
     toret = ""
 
-    for i in range(1,len(content)):
+    for i in range(0,len(content)-1):
         line = content[i]
 
         if temp_id[0] == line[0]:
@@ -209,17 +215,17 @@ def Modify_Frequency(obj = Item()):
                      return line[14:17]
 
                 else:
-                    toret = line[14:17]
+                    toret = line[15:17]
                     line = obj.getInfoLine()
                     break
             else:
                 pass
 
-        elif int(temp_idl[0]) > int(line[0]):
-            dist = int(line[0:3])
+        elif int(temp_id[0]) > int(line[0]):
+            dist = int(line[1:3])
             i+=dist
 
-        elif int(temp_idl[0]) < int(line[0]):
+        elif int(temp_id[0]) < int(line[0]):
             raise NoWorryException
 
         else:
@@ -255,47 +261,48 @@ def setNextDate(obj = Item()):
 #GETTING STUFF
 def check_date(line = ""):
 
-    month_dir = [31,[28,30],31,30,31,30,31,31,30,31,30,31]
+    month_dir = [31,[28,29],31,30,31,30,31,31,30,31,30,31]
 
     tod = str( datetime.date.today() )
-    dat = line[4:14]
-    if tod == dat:
-        return True
-    freq = line[15:17]
-    sum = 0
-    m_distance = int(tod[5:7]) - int(dat[5:7])
 
-    if m_distance == 0:
-        sum = int(tod[8:]) - int(dat[8:])
-
-    elif m_distance>0:
-
-        for i in range(0,m_distance):
-            step = int( dat[5:7] ) + i - 1
-            #Get the days from the dictionary
-            sum = sum + month_dir[step]
-
-        sum += ( int(tod[8:]) - int(dat[8:]) )
-
+    chk = line.split(" ")
+    dat = chk[1]
+    if int(dat[:3])%4 == 0 or int(dat[:3])%400 == 0 or not(int(dat[:3])%100 == 0) :
+        month_dir[1] = month_dir[1].pop(1)
     else:
+        month_dir[1] = month_dir[1].pop(0)
+    #days distance
+    d_dist = int(tod[8:]) - int(dat[8:])
+    if d_dist == 0:
+        return True
+    else:
+        pass
+    #month distance
+    m_dist = int(tod[5:7]) - int(dat[5:7])
+    if m_dist == 0:
+        if d_dist<0:
+            d_dist += month_dir[int(dat[5:7])-1]
+        else:
+            pass
+    elif m_dist<0:
+        m_dist+=12
+    else:
+        pass
 
-        m_distance = m_distance*(-1) - 11
+    #set up the real distance
+    for i in range(0,m_dist):
+        step = i+int(dat[5:7])
+        if step>12:
+            step -= 12
+        else:
+            pass
+        d_dist+=month_dir[step-1]
 
-        for i in range(0,m_distance):
-            step = i+int(dat[5:7])-1
-
-            if step > 11:
-                step = step - 11
-
-            #Get the days from the dictionary
-            sum = sum + month_dir[step]
-
-        sum += int(tod[8:]) - int(dat[8:])
-
-    if sum == int(freq):
+    if chk[2] == d_dist:
         return True
     else:
         return False
+
 
 def getTWorries():
     global path_var
@@ -404,6 +411,7 @@ def add_days_worries():
     freq = input()
     tod = str( datetime.date.today() )
     obj = Item(name,int(tod[:4]),int(tod[5:7]),int(tod[8:]),freq)
+    obj.find_Idl()
     sum = 0
 
     try :
@@ -419,9 +427,10 @@ def add_days_worries():
                 file.write(toret+"\n")
                 file.write(obj.getFreq()+"\n")
                 file.close()
+
             else:
                 file = open(path_var+"\\"+obj.getName()+".txt","r+")
-                toret = Modify_Frequency()
+                toret = Modify_Frequency(obj)
                 file.write(toret+"\n")
                 content = file.readlines()
                 for line in content:
@@ -433,6 +442,7 @@ def add_days_worries():
                     os.remove(path_var+"\\"+obj.getName()+".txt")
                 else:
                     pass
+            change_line( obj.getInfoLine() )
         else:
             return 0
 
@@ -481,10 +491,10 @@ def worry_done():
 def update_yesterday(ppath = ""):
     file = open(ppath,"r+")
     content = file.readlines()
-    if len(content) == 1:
-        content = []
+    content.pop(0)
+    if len(content) == 0:
+        pass
     else:
-        content.pop(1)
         for line in content:
             obj = line.split(" ")
             obj = set_up_an_obj_by_line(obj, str( datetime.date.today() ) )
