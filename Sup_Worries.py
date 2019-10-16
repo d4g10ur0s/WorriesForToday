@@ -80,6 +80,12 @@ def createTxt():
     file.close()
 
 #Basic For File Manipulation
+def has_no_more(arr = [],i = 0):
+    try:
+        j = arr[i+1]
+        return False
+    except:
+        return True
 def saveWorry(obj = Item()):
     global path_var
     global Dir_name
@@ -97,11 +103,15 @@ def saveWorry(obj = Item()):
                 content.insert(i+1,obj.getLine())
                 break
             elif int(obj_id[0])>int(temp_id[0]):
-                gap = int(obj_id[0:])
-                i+=gap
+                if has_no_more(content,i+1):
+                    content.append(obj.getLine())
+                    break
+                else:
+                    gap = int(obj_id[1:])
+                    i+=gap
             else:
-                gap = obj_id[0:]
-                if check_Colissions(obj,content[i+1:i+1+int(gap)]):
+                gap = obj_id[1:]
+                if check_Colissions(obj,content[i+1:i+2+int(gap)]):
                     print("A Colission Has Occured Do You Want To Recalculate Frequency?(y/n)\n")
                     inp = input()
                     if inp == "Y" or inp == "y":
@@ -110,7 +120,7 @@ def saveWorry(obj = Item()):
                         print("Item Cannot Be Saved\n")
                     break
                 else:
-                    obj.AddColission(gap)
+                    obj.AddColission(temp_id)
                     content.insert(i+1,obj.getLine())
                     break
 
@@ -118,6 +128,40 @@ def saveWorry(obj = Item()):
     for line in content:
         file.write(line)
     file.close()
+#update a worry in main file
+def find_return_replace(obj = Item(),flag = False):
+    global path_var
+    global Dir_name
+    global Txt_name
+    global first_line
+
+    file = open(path_var+Dir_name+Txt_name,"r+")
+    content = file.readlines()
+    content.pop(0)
+    line = obj.getLine()
+    line = line.split(" ")
+    line = line[0]
+
+    for i in range(0,len(content)):
+        if line in content[i]:
+            content[i] = obj.getLine()
+            break
+        elif int(line[0])>int(content[i][0]):
+            i+=int(content[i][1:3])
+        else:
+            pass
+
+    file.seek(0,0)
+    content.insert(0,first_line)
+    for item in content:
+        file.write(item)
+    file.close()
+
+    if flag == True:
+        return obj
+    else:
+        pass
+
 def new_Worry():
     inp = ""
     dat = ""
@@ -299,24 +343,16 @@ def exc_funct():
 def form_Today():
     global path_var
     global Dir_name
-    global first_line
+
     try:
         tod = return_TodWorries()
     except:
         return exc_funct()
     else:
         todstr = str(datetime.date.today())
-        file = open(path_var+Dir_name+"\\"+todstr+".txt","r+")
-        content = file.readlines()
-        content.pop(0)
-        tod.pop(0)
-        if len(tod)>len(content):
-            tod.insert(0,first_line)
-            file.seek(0,0)
-            for line in tod:
-                file.write(line)
-        else:
-            pass
+        file = open(path_var+Dir_name+"\\"+todstr+".txt","w+")        
+        for line in tod:
+            file.write(line)
         file.close()
         return True
 #print Today
@@ -330,12 +366,58 @@ def Print_Today():
     print("   "+content[0])
     for i in range(0,len(content)-1):
         print(str(i+1)+") "+content[i+1])
+    content.pop(0)
+    return content
+#######################################################
+#update the line and return an object about it
+def Update_Worry(line = ""):
+    month_dir = [31,[28,29],31,30,31,30,31,31,30,31,30,31]
+    inf = line.split(" ")
+    name = inf[3]
+    name = name[:len(name)-1]
+    freq = inf[2]
+    dat = inf[1]
+    dat = dat.split("-")
+    day = int(dat[2])+int(freq)
+    month = int(dat[1])
+    if int(month_dir[month])>=day:
+        pass
+    else:
+        while day>int(month_dir[month]):
+            month+=1
+            day = day - month_dir[month]
+    dat = str( datetime.date( int(dat[0]) , month , int(day) ) )
+    obj = Item(name,freq,dat)
+    obj.ModifyId(inf[0])
+    return obj
+
+def Worry_Done(tod = []):
+    global path_var
+    global Dir_name
+    global first_line
+
+    if len(tod) == 0:
+        print("You Have No Worries For Today\n")
+    else:
+        print("Number What Worry?\n")
+        try:
+            pos = int(input())
+            fut = tod.pop(pos-1)
+            #returns an obj updated
+            fut = Update_Worry(fut)
+            find_return_replace(fut)
+
+        except ValueError:
+            print("Not A Correct Input\n")
+
+
 
 def main():
     global path_var
     global Dir_name
     path_var = SetUpPath()
     inp = ""
+    tod = []
 
     if os.path.exists(path_var+Dir_name):
         pass
@@ -346,15 +428,17 @@ def main():
     while not(inp == "close" or inp == "Close"):
         check_Today()
         if form_Today():
-            Print_Today()
+            tod = Print_Today()
         else:
             pass
-        print("****** Menu ******\n1)New Worry\n2)Worry For Today\n")
+        print("****** Menu ******\n1)New Worry\n2)Worry For Today\n3)Worry Done\n")
         inp = input()
         if int(inp) == 1:
             new_Worry()
         elif int(inp) == 2:
             create_TodWorry()
+        elif int(inp) == 3:
+            Worry_Done(tod)
 
 #if __name__ == "__main__":
  #   main()
