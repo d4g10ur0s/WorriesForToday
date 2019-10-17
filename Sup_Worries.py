@@ -263,6 +263,12 @@ def calc_gap(line = ""):
         else:
             dgap = int(tod[8:])-day
             mgap = int(tod[5:7]) - month
+            #to Back?
+            if month > int(tod[5:7]):
+                mgap = mgap *(-1)
+            else:
+                pass
+
             if mgap<0:
                 mgap+=12
             else:
@@ -271,7 +277,7 @@ def calc_gap(line = ""):
                 if i<=12:
                     dgap+=int(month_dir[i-1])
                 else:
-                    dgap+=int(month_dir[i-12])
+                    dgap+=int(month_dir[i-13])
             return dgap
 #returns Boolean
 def check_date(line = ""):
@@ -350,7 +356,7 @@ def form_Today():
         return exc_funct()
     else:
         todstr = str(datetime.date.today())
-        file = open(path_var+Dir_name+"\\"+todstr+".txt","w+")        
+        file = open(path_var+Dir_name+"\\"+todstr+".txt","w+")
         for line in tod:
             file.write(line)
         file.close()
@@ -385,7 +391,7 @@ def Update_Worry(line = ""):
     else:
         while day>int(month_dir[month]):
             month+=1
-            day = day - month_dir[month]
+            day = day - month_dir[month] + 1
     dat = str( datetime.date( int(dat[0]) , month , int(day) ) )
     obj = Item(name,freq,dat)
     obj.ModifyId(inf[0])
