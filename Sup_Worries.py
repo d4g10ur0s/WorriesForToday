@@ -423,6 +423,47 @@ def Worry_Done(tod = []):
         except ValueError:
             print("Not A Correct Input\n")
 
+def Yes_Goes_Tod(items = []):
+    tod = str(datetime.date.today())
+    for item in items:
+        item = item.split()
+        item[1] = tod
+        name = ""
+        for word in item[3:]:
+            name+=word+" "
+        name = name[:len(name)-2]
+        obj = Item(name,int(item[2]),tod)
+        obj.ModifyId(item[0])
+        find_return_replace(obj)
+
+def Not_done_Worries():
+    global path_var
+    global Dir_name
+    dat = str(datetime.date.today())
+    dat = dat.split("-")
+    dat[2] = int(dat[2])-1
+    if dat[2] == 0:
+        dat[1] = int(dat[1]) - 1
+        if dat[1] == 0:
+            dat[0] = int(dat[0])-1
+            dat[1] = 12
+        else:
+            pass
+        dat[2] = int(month_dir[ int(dat[1]) - 1] )
+    else:
+        pass
+    dat = str( datetime.date( int(dat[0]), int(dat[1]), int(dat[2]) ) )
+    try:
+        file = open(path_var+Dir_name+"\\"+dat+".txt","r+")
+        content = file.readlines()
+        content.pop(0)
+        if len(content) == 0:
+            return False
+        else:
+            Yes_Goes_Tod(content)
+            return True
+    except:
+        return False
 
 
 def main():
@@ -443,8 +484,15 @@ def main():
         if form_Today():
             tod = Print_Today()
         else:
+            continue
+
+        if Not_done_Worries():
+            continue
+        else:
             pass
+
         print("****** Menu ******\n1)New Worry\n2)Worry For Today\n3)Worry Done\n")
+
         inp = input()
         if int(inp) == 1:
             new_Worry()
