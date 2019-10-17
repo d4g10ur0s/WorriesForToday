@@ -376,11 +376,18 @@ def Print_Today():
     return content
 #######################################################
 #update the line and return an object about it
+def get_Name(arr = []):
+    name = ""
+    for i in arr:
+        name += i + " "
+
 def Update_Worry(line = ""):
     month_dir = [31,[28,29],31,30,31,30,31,31,30,31,30,31]
     inf = line.split(" ")
-    name = inf[3]
-    name = name[:len(name)-1]
+    name = ""
+    for item in inf[3:]:
+        name += item + " "
+    name = name[:len(name)-2]
     freq = inf[2]
     dat = inf[1]
     dat = dat.split("-")
@@ -446,5 +453,5 @@ def main():
         elif int(inp) == 3:
             Worry_Done(tod)
 
-#if __name__ == "__main__":
- #   main()
+if __name__ == "__main__":
+    main()
