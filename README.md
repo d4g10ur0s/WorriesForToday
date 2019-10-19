@@ -1,3 +1,3 @@
 
 # A System To Remind Your Worries...
-#Bugs On: new frequencies.
+#Bugs on : Only for One Time Worry
