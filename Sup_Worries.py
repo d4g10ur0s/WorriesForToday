@@ -5,6 +5,7 @@ import datetime
 first_line = "Idl Last_Occur Fr Name\n"
 Dir_name = "MWorries"
 Txt_name = "\\Worries.txt"
+one_time = "\\OneTimeWorry.txt"
 
 path_var = __file__
 
@@ -75,7 +76,11 @@ def createTxt():
     global Dir_name
     global Txt_name
     global first_line
+    global one_time
     file = open(path_var+Dir_name+Txt_name,"w+")
+    file.write(first_line)
+    file.close()
+    file = open(path_var+Dir_name+one_time,"w+")
     file.write(first_line)
     file.close()
 
@@ -86,11 +91,18 @@ def has_no_more(arr = [],i = 0):
         return False
     except:
         return True
-def saveWorry(obj = Item()):
+def saveWorry(obj = Item(),flag = False):
     global path_var
     global Dir_name
     global Txt_name
-    file = open(path_var+Dir_name+Txt_name,"r+")
+    global one_time
+    file = ""
+
+    if flag:
+        file = open(path_var+Dir_name+one_time,"r+")
+    else:
+        file = open(path_var+Dir_name+Txt_name,"r+")
+
     content = file.readlines()
     if len(content) == 1:
         content.append(obj.getLine())
@@ -128,6 +140,7 @@ def saveWorry(obj = Item()):
     for line in content:
         file.write(line)
     file.close()
+
 #update a worry in main file
 def find_return_replace(obj = Item(),flag = False):
     global path_var
@@ -320,21 +333,42 @@ def check_Today():
         pass
     else:
         createToday(path_var+Dir_name+"\\"+tod+".txt")
+#Is this Only For One Time?
+def ZFrequency(obj = Item()):
+    print("Frequency Is 0.Is This Worry For One Time Only?\n")
+    inp = input()
+    if inp == "Y" or inp == "y":
+        saveWorry(obj,True)
+        return True
+    else:
+        return False
 #for today's file
 def create_TodWorry():
+
     last_occur = str(datetime.date.today())
+
     print("Name Your Worry\n")
     name = input()
+
     print("Any Frequency In Mind?(y/n)\n")
     inp = input()
+
     if inp == "y" or inp == "Y":
         print("Give Frequency\n")
-        inp = input()
-        inp = int(inp)
+        fr = input()
+        fr = int(fr)
     else:
-        inp = 0
-    obj = Item(name,inp,last_occur)
-    saveWorry(obj)
+        fr = 0
+
+    obj = Item(name,fr,last_occur)
+
+    if fr == 0:
+        if ZFrequency(obj):
+            saveWorry(obj,True)
+        else:
+            saveWorry(obj)
+    else:
+        saveWorry(obj)
 
 def exc_funct():
     print("No Worries For Today\nDo You Have To Add Some?(y/n)\n")
@@ -384,10 +418,12 @@ def get_Name(arr = []):
 def Update_Worry(line = ""):
     month_dir = [31,[28,29],31,30,31,30,31,31,30,31,30,31]
     inf = line.split(" ")
+
     name = ""
     for item in inf[3:]:
         name += item + " "
     name = name[:len(name)-2]
+
     freq = inf[2]
     dat = inf[1]
     dat = dat.split("-")
@@ -431,7 +467,7 @@ def Yes_Goes_Tod(items = []):
         name = ""
         for word in item[3:]:
             name+=word+" "
-        name = name[:len(name)-2]
+        name = name[:len(name)-1]
         obj = Item(name,int(item[2]),tod)
         obj.ModifyId(item[0])
         find_return_replace(obj)
@@ -456,14 +492,15 @@ def Not_done_Worries():
     try:
         file = open(path_var+Dir_name+"\\"+dat+".txt","r+")
         content = file.readlines()
+        file.close()
         content.pop(0)
         if len(content) == 0:
-            return False
+            pass
         else:
             Yes_Goes_Tod(content)
-            return True
+        os.remove(path_var+Dir_name+"\\"+dat+".txt")
     except:
-        return False
+        pass
 
 
 def main():
@@ -479,17 +516,16 @@ def main():
         createDir()
         createTxt()
 
+    Not_done_Worries()
+
     while not(inp == "close" or inp == "Close"):
+
         check_Today()
         if form_Today():
             tod = Print_Today()
         else:
             continue
 
-        if Not_done_Worries():
-            continue
-        else:
-            pass
 
         print("****** Menu ******\n1)New Worry\n2)Worry For Today\n3)Worry Done\n")
 
