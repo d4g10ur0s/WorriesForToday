@@ -41,6 +41,10 @@ class Item:
         self.id = id
     def AddColission(self,id = ""):
         self.id = str(int(id)+1)
+        if len(self.id) == 1:
+            self.id = "00"+self.id
+        else:
+            pass
     def getId(self):
         return self.id
 
@@ -200,8 +204,16 @@ def new_Worry():
             break
         except ValueError:
             print("Input Is Not Correct\n")
+
     obj = Item(name,int(freq),dat)
-    saveWorry(obj)
+
+    if int( obj.getFreq() ) == 0:
+        if ZFrequency(obj):
+            saveWorry(obj,True)
+        else:
+            saveWorry(obj)
+    else:
+        saveWorry(obj)
 
 #Create Item file
 def It_file(obj = Item(),curr_freq = 0):
@@ -429,12 +441,12 @@ def Update_Worry(line = ""):
     dat = dat.split("-")
     day = int(dat[2])+int(freq)
     month = int(dat[1])
-    if int(month_dir[month])>=day:
+    if int(month_dir[month-1])>=day:
         pass
     else:
-        while day>int(month_dir[month]):
+        while day>int(month_dir[month-1]):
             month+=1
-            day = day - month_dir[month] + 1
+            day = day - month_dir[month-1] + 1
     dat = str( datetime.date( int(dat[0]) , month , int(day) ) )
     obj = Item(name,freq,dat)
     obj.ModifyId(inf[0])
