@@ -19,8 +19,8 @@ dir_name2 = "Dates"
 txt_name = "\\Worries.txt"
 first_line1 = "Idl Last_Occur Fr Name\n"
 one_time = "\\OneTimeWorry.txt"
-first_line3 = "Idl Last_Occur Name\n"
-first_line2 = "Idl Flag"
+first_line3 = "Idl ToBe_Occur Name\n"
+first_line2 = "Idl Flag\n"
 
 
 class Item:
@@ -123,6 +123,37 @@ class Item:
     def return_lin(self):
         return self.id + " " + "0"
 
+def saveToDate(path = "",obj = Item()):
+    global dir_name2
+    global first_line3
+    file = None
+    try:
+        file = open(path+dir_name2+"\\"+str(obj.ret_to_be_occured()), "r+")
+        content = file.readlines(2)
+        try:
+            while 1:
+                if obj.getDigit() > next_line[0]:
+                    gap = int(next_line[1:3])
+                    content = content + file.readlines(gap)
+                    next_line = content[len(content)-1]
+                elif obj.getDigit() == next_line[0] or obj.getDigit() < next_line[0] :
+                    temp_content.append(obj.return_lin())
+                    temp_content = temp_content + content.pop(len(content)-1) + file.readlines()
+                    seeker = format_Seeker(content)
+                    file.seek(seeker,0)
+                    for line in temp_content:
+                        file.write(line)
+                        file.close()
+        except:
+            next_line = content[1]
+            file.write(obj.return_lin())
+            file.close()
+    except:
+        file = open(path+dir_name2+"\\"+str(obj.ret_to_be_occured()), "w+")
+        file.write(first_line3)
+        file.write(obj.return_lin())
+        file.close()
+
 #A function to create objects using CMD
 def crt_obj_using_cmd(flag = 0):
     obj = ""
@@ -187,7 +218,6 @@ def next_date(line = ""):
     saveToDate(path,obj)
 
     return obj.return_line()
-
 
 #Useful Functions
 #path set up
