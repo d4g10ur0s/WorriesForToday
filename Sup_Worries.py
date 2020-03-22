@@ -121,36 +121,48 @@ class Item:
     def return_line(self):
         return self.id +" "+ str(self.last_occured) +" "+ self.freq +" "+ self.name + "\n"
     def return_lin(self):
-        return self.id + " " + "0"
+        return self.id + " " + "0\n"
 
 def saveToDate(path = "",obj = Item()):
     global dir_name2
-    global first_line3
+    global first_line2
     file = None
     try:
         file = open(path+dir_name2+"\\"+str(obj.ret_to_be_occured()), "r+")
-        content = file.readlines(2)
+        content = []
+        for i in range(0,2):
+            content.append(file.readline())
         try:
-            while 1:
-                if obj.getDigit() > next_line[0]:
-                    gap = int(next_line[1:3])
-                    content = content + file.readlines(gap)
-                    next_line = content[len(content)-1]
-                elif obj.getDigit() == next_line[0] or obj.getDigit() < next_line[0] :
-                    temp_content.append(obj.return_lin())
-                    temp_content = temp_content + content.pop(len(content)-1) + file.readlines()
-                    seeker = format_Seeker(content)
-                    file.seek(seeker,0)
-                    for line in temp_content:
-                        file.write(line)
-                        file.close()
-        except:
             next_line = content[1]
+            while 1:
+
+                if int(obj.getDigit() ) > int(next_line[0]):
+                    gap = int(next_line[1:3])
+                    for i in range(0,gap+1):
+                        content.append(file.readline() )
+                    next_line = content[len(content)-1]
+
+                elif obj.getDigit() == next_line[0] or int(obj.getDigit()) < int(next_line[0]) :
+                    temp_content = []
+                    temp_content.append(obj.return_lin())
+                    temp_content.append(content.pop(len(content)-1) )
+                    temp_content = temp_content + file.readlines()
+                    seeker = format_Seeker(content[:len(content)-1])
+                    file.seek(seeker,0)
+                    for line in content:
+                        file.write(line)
+                    file.close()
+                    break
+
+        except:
+            file.seek(len(first_line2),0)
             file.write(obj.return_lin())
             file.close()
+
     except:
+        print("egine\n")
         file = open(path+dir_name2+"\\"+str(obj.ret_to_be_occured()), "w+")
-        file.write(first_line3)
+        file.write(first_line2)
         file.write(obj.return_lin())
         file.close()
 
@@ -175,7 +187,7 @@ def crt_obj_using_cmd(flag = 0):
                 print("Set frequency.\n")
                 try:
                     obj.setFrq( int( input() ) )
-                    obj.set_to_be_occured()
+                    #obj.set_to_be_occured()
                     break
                 except ZeroFrequencyException:
                     print("Can't have zero for frequency.\n")
@@ -190,7 +202,7 @@ def crt_obj_using_cmd(flag = 0):
     if flag == 1 or flag == 2:
         while 1:
             print("When is this worry going to be occured?\n(yyyy-mm-dd)\n")
-            dat = input().trim("-")
+            dat = input().split("-")
             try:
                 obj.set_tboccured_manually(datetime.date(int(dat[0]) ,int(dat[1]) ,int(dat[2]) ) )
                 if flag == 1:
@@ -198,6 +210,7 @@ def crt_obj_using_cmd(flag = 0):
                     obj.calc_freq()
                 else :
                     pass
+                break
             except:
                 print("Wrong values for date.\n")
                 continue
@@ -268,9 +281,15 @@ def m_merge(arr1 = [],arr2 = []):
                 ret.append(arr2[j])
                 j+=1
         if i < len(arr1):
-            ret+=arr2[j:]
-        elif j<len(arr2):
-            ret+=arr1[i:]
+            if len(arr1) - i > 1:
+                ret+=arr1[i:]
+            else:
+                ret.append(arr1[i])
+        elif j < len(arr2):
+            if len(arr2) - j > 1:
+                ret+=arr2[j:]
+            else:
+                ret.append(arr2[j])
         else : pass
         return ret
 #mergesort algorithm
@@ -310,19 +329,31 @@ def Return_Today(path = ""):
     today_array = []
     dates = os.listdir(path)
     for file in dates :
-        if datetime.date(int(file[:4]),int(file[5:7]),int(file[8:10])).toordinal() <= datetime.date.today().toordinal():
+        if datetime.date(int(file[:4]),int(file[5:7]),int(file[8:10])).toordinal() < datetime.date.today().toordinal():
             today_array += update_file(path+"\\"+file)
         else: pass
     #today_array += get_today(path)
-    return m_mergesort(today_array)
+    try:
+        file = open(path+"\\"+str( datetime.date.today() ),"r+" )
+        content = file.readlines()
+        line1len = len(content[0])
+        content.pop(0)
+        content = m_mergesort(today_array+content)
+        file.seek(line1len,0)
+        for line in content:
+            file.write(line)
+            return content
+    except :
+        return []
+
 
 #A helpful function to format a seeker
 def format_Seeker(array = []):
-    seeker = 0
+    seeker = 1
     for i in array:
         seeker+=len(i)
     #It can't be 0 because 1st line is always in array
-    return seeker-1
+    return seeker
 def recalculateFrequency(obj = Item()):
     global dir_name1
     path = SetUpPath()
@@ -350,6 +381,12 @@ def recalculateFrequency(obj = Item()):
     return obj
 
 #CollisionMechanism
+def checkCollision(obj = Item(),content = []):
+    for line in content:
+        if obj.getName() == line[18:len(line)]:
+            return 1
+        else: pass
+    return 0
 def CollissionMechanism(line = "",obj = Item()):
     print("A collision has occured\n"+ line + obj.return_line() +"\nDo you want to replace?\n(y/n)\n")
     while 1:
@@ -378,40 +415,50 @@ def saveWorry(path = "",obj = Item()):
     global one_time
 
     file = None
+    content = []
     if obj.getOt():
         #if is one time worry open the appropriate file
         file = open(path+one_time,"r+")
     else:
         file = open(path+txt_name,"r+")
 
-    content = file.readlines(2)
+    for i in range(0,2):
+        content.append(file.readline())
 
     #1st time in worry file...no worries exist
     try:
         next_line = content[1]
     except:
+        print("malakeia sou")
         file.seek(0,2)
         file.write(obj.return_line())
         file.close()
         saveToDate(path,obj)
         return
 
-    indx = 0
     while 1:
-
+        #the idl doesnt exist
         if next_line == "":
             file.write(obj.return_line())
             file.close()
             break
+        #Object's idl in this category
         elif next_line[0] == obj.getDigit():
-            temp_content = file.readlines(int(next_line[1:3]))
+
+            for i in range(0,int(next_line[1:3])+1):
+                temp_content = []
+                temp_content.append(file.readline())
+
             temp_content.insert(0,next_line)
             seeker = checkCollision(obj,temp_content)
+
             if seeker == 0:
                 pass
-            elif seeker == -1:
-                print("Worry isn\'t going to be saved.\n")
-                return None
+            #Giati uparxei auto edw????? o.O
+            #elif seeker == -1:
+            #    print("Worry isn\'t going to be saved.\n")
+            #    return None
+
             else:
                 #if there is a collission
                 temp_content[seeker] = CollisionMechanism(temp_content[seeker], obj)
@@ -434,14 +481,16 @@ def saveWorry(path = "",obj = Item()):
             file.close()
             break
 
-        elif int(nextline[0])<int(obj.getDigit()):
+        elif int(next_line[0]) < int(obj.getDigit()):
             content.append(nextline)
-            content+=file.readlines(int(next_line[1:3]))
+            for i in range(0,int(next_line[1:3])+1):
+                content+=file.readline()
             nextline = file.readline()
 
         else:
+            #digit is greater ,obj has to be saved here
             seeker = format_Seeker(content)
-            temp_content = f.readlines()
+            temp_content = file.readlines()
             temp_content.insert(0,obj.return_line())
             file.seek(seeker,0)
             for i in range(0,len(temp_content)):
@@ -449,7 +498,7 @@ def saveWorry(path = "",obj = Item()):
             file.close()
             break
 
-        saveToDate(path,obj)
+    saveToDate(path,obj)
 
 #if there are to no worries 4 today
 def No_Worries_4_Today(path = ""):
@@ -508,6 +557,44 @@ def worry_done(path = "",content = [],num = 0):
 
     return content
 
+def find_by_idl(path = "",content = []):
+    global txt_name
+
+    file = open(path+txt_name,"r+")
+    fcontent = file.readlines()
+    fcontent.pop(0)
+    file.close()
+
+    if isinstance(content,str):
+        indx = 0
+        while indx < len(fcontent):
+
+            if content[0] == fcontent[indx][0]:
+                gap = int(content[1:3])
+                return fcontent.pop(indx+gap)
+            else:
+                indx+=int(fcontent[indx][1:3])
+
+    else:
+        indx = 0
+        for i in range(0,len(content) ):
+            while 1:
+                line = content[i]
+                if fcontent[indx][0] == line[0]:
+                    #add gap or not?
+                    if fcontent[indx][1:3] == line[1:3]:
+                        content[i] = fcontent[indx]
+                        indx += 1
+                        break
+                    #content[][1:3] < line[1:3]
+                    else:
+                        indx += int(content[indx][1:3]) - int(line[1:3])
+                #content[][0] < line[0]
+                else:
+                    indx += int(content[indx][1:3]) + 1
+
+        return content
+
 def main():
     global path_var
     global first_line1
@@ -531,6 +618,7 @@ def main():
             No_Worries_4_Today(path_var)
             continue
         else:
+            today_content = find_by_idl(path_var,today_content)
             i = 0
             for line in today_content:
                 print(str(i)+") "+line)
