@@ -123,6 +123,7 @@ class Item:
     def return_lin(self):
         return self.id + " " + "0\n"
 
+#A helpful function to format a seeker
 def saveToDate(path = "",obj = Item()):
     global dir_name2
     global first_line2
@@ -136,19 +137,34 @@ def saveToDate(path = "",obj = Item()):
             next_line = content[1]
             while 1:
 
-                if int(obj.getDigit() ) > int(next_line[0]):
+                if int(obj.getDigit() ) < int(next_line[0]):
                     gap = int(next_line[1:3])
                     for i in range(0,gap+1):
-                        content.append(file.readline() )
+                        content.append( file.readline() )
                     next_line = content[len(content)-1]
+                    if next_line == "":
+                        file.write(obj.return_lin())
+                    else:
+                        pass
 
-                elif obj.getDigit() == next_line[0] or int(obj.getDigit()) < int(next_line[0]) :
+                elif obj.getDigit() == next_line[0] :
                     temp_content = []
                     temp_content.append(obj.return_lin())
                     temp_content.append(content.pop(len(content)-1) )
                     temp_content = temp_content + file.readlines()
+                    seeker = format_Seeker(content)
+                    file.seek(seeker,0)
+                    for line in temp_content:
+                        file.write(line)
+                    file.close()
+                    break
+
+                elif int(obj.getDigit()) > int(next_line[0]) :
                     seeker = format_Seeker(content[:len(content)-1])
                     file.seek(seeker,0)
+                    content = file.readlines()
+                    file.seek(seeker,0)
+                    file.write(obj.return_lin())
                     for line in content:
                         file.write(line)
                     file.close()
@@ -167,6 +183,12 @@ def saveToDate(path = "",obj = Item()):
         file.close()
 
 #A function to create objects using CMD
+def format_Seeker(array = []):
+    seeker = 1
+    for i in array:
+        seeker+=len(i)
+    #It can't be 0 because 1st line is always in array
+    return seeker
 def crt_obj_using_cmd(flag = 0):
     obj = ""
     #Set name
@@ -347,13 +369,6 @@ def Return_Today(path = ""):
         return []
 
 
-#A helpful function to format a seeker
-def format_Seeker(array = []):
-    seeker = 1
-    for i in array:
-        seeker+=len(i)
-    #It can't be 0 because 1st line is always in array
-    return seeker
 def recalculateFrequency(obj = Item()):
     global dir_name1
     path = SetUpPath()
@@ -464,7 +479,7 @@ def saveWorry(path = "",obj = Item()):
                 temp_content[seeker] = CollisionMechanism(temp_content[seeker], obj)
                 seeker = format_Seeker(content)
                 temp_content+=file.readlines()
-                file.seek(0,seeker)
+                file.seek(seeker,0)
                 for i in range(0,len(temp_content)):
                     file.write(temp_content[i])
                 file.close()
@@ -481,22 +496,26 @@ def saveWorry(path = "",obj = Item()):
             file.close()
             break
 
-        elif int(next_line[0]) < int(obj.getDigit()):
-            content.append(nextline)
-            for i in range(0,int(next_line[1:3])+1):
+        elif int(next_line[0]) > int(obj.getDigit()):
+            content.append(next_line)
+            for i in range(0,int(next_line[1:3])):
                 content+=file.readline()
-            nextline = file.readline()
+            next_line = file.readline()
 
         else:
             #digit is greater ,obj has to be saved here
-            seeker = format_Seeker(content)
-            temp_content = file.readlines()
-            temp_content.insert(0,obj.return_line())
-            file.seek(seeker,0)
-            for i in range(0,len(temp_content)):
-                file.write(temp_content[i])
-            file.close()
-            break
+            next_line = file.readline()
+            if next_line == "":
+                pass
+            else:
+                seeker = format_Seeker(content)
+                temp_content = file.readlines()
+                temp_content.insert(0,obj.return_line())
+                file.seek(seeker,0)
+                for i in range(0,len(temp_content)):
+                    file.write(temp_content[i])
+                    file.close()
+                break
 
     saveToDate(path,obj)
 
@@ -621,6 +640,7 @@ def main():
             today_content = find_by_idl(path_var,today_content)
             i = 0
             for line in today_content:
+                i+=1
                 print(str(i)+") "+line)
 
             while 1:
@@ -665,4 +685,3 @@ def main():
                 except:
                     print("Xazoulhs\n")
                     break
-                    
