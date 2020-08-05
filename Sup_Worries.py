@@ -1,687 +1,100 @@
 import os
 import datetime
+#0123 56 89
+#yyyy-mm-dd
 
-class NoTodayException(Exception):
-    pass
-class ExitException(Exception):
-    pass
-class CollissionException(Exception):
-    pass
-
-class ZeroFrequencyException(Exception):
-    pass
-
-#global vars
-path_var = __file__
-
-dir_name1 = "Frequencies"
-dir_name2 = "Dates"
-txt_name = "\\Worries.txt"
-first_line1 = "Idl Last_Occur Fr Name\n"
-one_time = "\\OneTimeWorry.txt"
-first_line3 = "Idl ToBe_Occur Name\n"
-first_line2 = "Idl Flag\n"
-
+#Basic String tb         lt
+#012 4567 9a cd  f01 23 45 67 89ab..
+#idl yyyy-mm-dd yyyy-mm-dd fr name...
 
 class Item:
-    name = ""
-    id = ""
-    last_occured = datetime.date.today()
-    to_be_occured = datetime.date.today()
-    freq = ""
-    one_time = False
+    _name = ''
+    _id = ''
+    _tb = str(datetime.date.today())
+    _lt = str(datetime.date.today())
+    fr = 0
 
-    def __init__(self,name = "it", last_occured = datetime.date.today(), freq = 1):
-        self.name = name
-        self.last_occured = last_occured
-        self.setId()
-        try:
-            self.setFrq(freq)
-        except ZeroFrequencyException:
-            one_time = True
+    def __init__(self, name):
+        self._name = name
+        self._id = str(len(name)%10)+"00"
 
-    def getName(self):
-        return self.name
-    def setName(self,name = ""):
-        self.name = name
+    #manipulating id and name
+    def set_name(self, name):
+        self._name = name
+        self._id = str(len(name)%10)+"00"
+    def set_id(self,id):
+        self._id=id
+    def set_gap(self,gap = 0):
+        self._id = gap+1
+    def get_name(self):
+        return self._name
+    def get_id(self):
+        return self._id
 
-    def setOt(self):
-        self.one_time = True
-    def getOt(self):
-        return self.one_time
+    #manipulating frequency
+    def calc_frequency(self):
+        self.fr = self._lt.toordinal() - self._tb.toordinal()
+    def get_frequency(self):
+        return int(self.fr)
 
-    def setFrq(self,fr = 0):
-        if fr == 0:
-            raise ZeroFrequencyException
+    #manipulating dates
+    def convert_from_string(st = ""):
+        return datetime.date(int(st[:4]), int(st[5:7]), int(st[8:]) )
+    def set_tb(self,tb = datetime.date.today()):
+        #returns True if lt<tb
+        if tb.toordinal()>=self._lt.toordinal():
+            self._tb = str(tb)
+            return True
         else:
-            fr = str(fr)
-            if len(fr) == 1:
-                self.freq = "0" + fr
-            else:
-                self.freq = fr
-    def calc_freq(self):
-        freq = int( self.last_occured.toordinal() ) - int( self.to_be_occured.toordinal() )
-        if freq == 0:
-            freq+=1
-        self.setFrq(freq)
-    def isOne(self):
-        return only_one_time
-    def retFreq(self):
-        return self.freq
+            return False
+    def set_lt(self,lt = datetime.date.today()):
+        self._lt = str(lt)
+    def last_goes_next(self):
+        self._lt=self._tb
+    def next_date(self):
+        #months with 31 days
+        arr = [1,3,5,7,8,10,12]
 
-    def setId(self):
-        self.id = str(len(self.name)%10)
-        self.id = self.id + "00"
-    def setIdManually(self,idl = ""):
-        self.id = idl
-    def getId(self):
-        return self.id
-    def getDigit(self):
-        return self.id[0]
-    def addGap(self,tim = 0):
-        self.id = str(int(self.id)+tim+1)
+        day = int(self._lt[8:]) + int(self.fr)
+        month = int(self._lt[5:7])
+        year = int(self._lt[:4])
+        if (month in arr) and (day>31):
+            day-=31
+            month+=1
 
-    def set_to_be_occured(self):
-        #need a dictionary for months
-        month_dir = [31,31,30,31,30,31,31,30,31,30,31]
-        d_gap = int(self.last_occured.day)+int(self.freq)
-        month = int(self.last_occured.month)-1
-        year = int(self.last_occured.year)
-        #set Up month array
-        if int(datetime.date.today().month) < month:
-            if year % 100 == 0 or not(year%4==0) or not(year%400 == 0):
-                month_dir.insert(1,28)
-            else:
-                month_dir.instert(1,29)
+        elif month==2 and day>28:
+            day-=28
+            month+=1
+
         else:
-            if int(datetime.date.today().year) % 100 == 0 or not(int(datetime.date.today().year)%4==0) or not(int(datetime.date.today().year)%400 == 0):
-                month_dir.insert(1,28)
-            else:
-                month_dir.insert(1,29)
-
-        while d_gap > month_dir[month]:
-            if month >= 12:
-                month -= 12
-                year += 1
+            day-=30
+            month+=1
+            if month > 12:
+                month = 1
+                year+=1
             else:
                 pass
-            d_gap -= month_dir[month]
-            month += 1
+        #set next date
+        self._lt = self._tb
+        self._tb = str(datetime.date(year,month,day))
 
-        self.to_be_occured = datetime.date(year,month+1,d_gap)
-    def set_tboccured_manually(self,tbocc = datetime.date.today()):
-        self.to_be_occured = tbocc
-    def ret_to_be_occured(self):
-        return self.to_be_occured
-
-    def retDat(self):
-        return self.last_occured
-    def set_Dat_manually(self,dat = datetime.date.today()):
-        self.dat = dat
-    def return_line(self):
-        return self.id +" "+ str(self.last_occured) +" "+ self.freq +" "+ self.name + "\n"
-    def return_lin(self):
-        return self.id + " " + "0\n"
-
-#A helpful function to format a seeker
-def saveToDate(path = "",obj = Item()):
-    global dir_name2
-    global first_line2
-    file = None
-    try:
-        file = open(path+dir_name2+"\\"+str(obj.ret_to_be_occured()), "r+")
-        content = []
-        for i in range(0,2):
-            content.append(file.readline())
+    #manipulating basic string
+    def create_from_string(self,st = ""):
         try:
-            next_line = content[1]
-            while 1:
-
-                if int(obj.getDigit() ) < int(next_line[0]):
-                    gap = int(next_line[1:3])
-                    for i in range(0,gap+1):
-                        content.append( file.readline() )
-                    next_line = content[len(content)-1]
-                    if next_line == "":
-                        file.write(obj.return_lin())
-                    else:
-                        pass
-
-                elif obj.getDigit() == next_line[0] :
-                    temp_content = []
-                    temp_content.append(obj.return_lin())
-                    temp_content.append(content.pop(len(content)-1) )
-                    temp_content = temp_content + file.readlines()
-                    seeker = format_Seeker(content)
-                    file.seek(seeker,0)
-                    for line in temp_content:
-                        file.write(line)
-                    file.close()
-                    break
-
-                elif int(obj.getDigit()) > int(next_line[0]) :
-                    seeker = format_Seeker(content[:len(content)-1])
-                    file.seek(seeker,0)
-                    content = file.readlines()
-                    file.seek(seeker,0)
-                    file.write(obj.return_lin())
-                    for line in content:
-                        file.write(line)
-                    file.close()
-                    break
-
+            #set dates
+            self.set_lt(self.convert_from_string(st[14:23]))
+            if self.set_tb(self.convert_from_string(st[4:13])):
+                pass
+            else:
+                return False
+            #set name and id
+            self.set_name(st[27:])
+            self.set_id(st[:3])
+            #set frequency
+            self.calc_frequency()
+            #item constructed properly
+            return True
         except:
-            file.seek(len(first_line2),0)
-            file.write(obj.return_lin())
-            file.close()
-
-    except:
-        print("egine\n")
-        file = open(path+dir_name2+"\\"+str(obj.ret_to_be_occured()), "w+")
-        file.write(first_line2)
-        file.write(obj.return_lin())
-        file.close()
-
-#A function to create objects using CMD
-def format_Seeker(array = []):
-    seeker = 1
-    for i in array:
-        seeker+=len(i)
-    #It can't be 0 because 1st line is always in array
-    return seeker
-def crt_obj_using_cmd(flag = 0):
-    obj = ""
-    #Set name
-    while 1:
-        try:
-            print("Name your worry.\n")
-            obj = Item(input())
-            break
-        except:
-            print("Wrong Value For Name.\n")
-            continue
-    #Set frequency
-    if flag == 0:
-        while 1:
-            print("Do you have any frequency in mind?\n(y/n)\n")
-            fr = input()
-            if fr == "y" or fr == "Y":
-                print("Set frequency.\n")
-                try:
-                    obj.setFrq( int( input() ) )
-                    #obj.set_to_be_occured()
-                    break
-                except ZeroFrequencyException:
-                    print("Can't have zero for frequency.\n")
-                    continue
-                except ValueError:
-                    print("Incorrect value for frequency.\n")
-                    continue
-            else:
-                flag = 1
-                break
-    #set to be occured
-    if flag == 1 or flag == 2:
-        while 1:
-            print("When is this worry going to be occured?\n(yyyy-mm-dd)\n")
-            dat = input().split("-")
-            try:
-                obj.set_tboccured_manually(datetime.date(int(dat[0]) ,int(dat[1]) ,int(dat[2]) ) )
-                if flag == 1:
-                    #if flag == 2 is an onetime worry
-                    obj.calc_freq()
-                else :
-                    pass
-                break
-            except:
-                print("Wrong values for date.\n")
-                continue
-
-
-    return obj
-
-#A function to get next date in a line
-def next_date(line = ""):
-    freq = int(line[15:18])
-
-    obj = Item()
-    obj.setFrq(freq)
-    obj.set_to_be_occured()
-    obj.setIdManually(line[:3])
-    obj.setName(line[19:])
-
-    saveToDate(path,obj)
-
-    return obj.return_line()
-
-#Useful Functions
-#path set up
-def SetUpPath():
-    global path_var
-    path_var = path_var.split("\\")
-    path_var.pop(len(path_var)-1)
-    temp_path = ""
-    for word in path_var:
-        temp_path+=word+"\\"
-    path_var = temp_path
-    return path_var
-def create_dir(path="" ,keyword = ""):
-    os.mkdir(path+keyword)
-def create_WorryFile(path = "",keyword="",first_line = ""):
-    file = open(path+keyword,"w")
-    file.write(first_line)
-    file.close()
-def Program_SetUp(temp_path = ""):
-    global path_var
-    global txt_name
-    global first_line1
-    global dir_name1
-    global dir_name2
-    global one_time
-
-    create_dir(temp_path,dir_name1)
-    create_dir(temp_path,dir_name2)
-    create_WorryFile(temp_path,txt_name,first_line1)
-    create_WorryFile(temp_path,one_time,first_line3)
-
-#Update Previous Dates and Today File
-#merge ,part of mergesort
-def m_merge(arr1 = [],arr2 = []):
-    if len(arr1) == 0:
-        return arr2
-    elif len(arr2) == 0:
-        return arr1
-    else:
-        ret = []
-        i = 0
-        j = 0
-        while len(arr1) > i and len(arr2) > j:
-            if arr1[i] > arr2[j]:
-                ret.append(arr1[i])
-                i+=1
-            else:
-                ret.append(arr2[j])
-                j+=1
-        if i < len(arr1):
-            if len(arr1) - i > 1:
-                ret+=arr1[i:]
-            else:
-                ret.append(arr1[i])
-        elif j < len(arr2):
-            if len(arr2) - j > 1:
-                ret+=arr2[j:]
-            else:
-                ret.append(arr2[j])
-        else : pass
-        return ret
-#mergesort algorithm
-def m_mergesort(arr = []):
-    if len(arr) == 0 or len(arr) == 1:
-        return arr
-    elif len(arr)%2 == 0:
-        return m_merge(m_mergesort(arr[: int(len(arr)/2) ]) ,m_mergesort(arr[ int(len(arr)/2) :] ) )
-    else:
-        return m_merge(m_mergesort(arr[: int( (len(arr)-1) /2) ] ) ,m_mergesort(arr[int( (len(arr)-1) /2) :] ))
-#Return today content
-def read_today(path = ""):
-    file = open(path+"//"+str(datetime.date.today())+".txt","r+")
-    fcontent = file.readlines()
-    fcontent.pop(0)
-    file.close()
-    return fcontent
-#update an old file and delete it
-def update_file(path = ""):
-    file = open(path,"r+")
-    fcontent = file.readlines()
-    #close File
-    file.close()
-    #pop 1st line
-    fcontent.pop(0)
-    for item in fcontent:
-        temp = item.split(" ")
-        #change date to today
-        temp[1] = str(datetime.date.today())
-        #update the whole line
-        item = temp[0] + " " + temp[1] + " 1"
-        #delete unecessary file
-        os.remove(path)
-    return fcontent
-#General Function
-def Return_Today(path = ""):
-    today_array = []
-    dates = os.listdir(path)
-    for file in dates :
-        if datetime.date(int(file[:4]),int(file[5:7]),int(file[8:10])).toordinal() < datetime.date.today().toordinal():
-            today_array += update_file(path+"\\"+file)
-        else: pass
-    #today_array += get_today(path)
-    try:
-        file = open(path+"\\"+str( datetime.date.today() ),"r+" )
-        content = file.readlines()
-        line1len = len(content[0])
-        content.pop(0)
-        content = m_mergesort(today_array+content)
-        file.seek(line1len,0)
-        for line in content:
-            file.write(line)
-            return content
-    except :
-        return []
-
-
-def recalculateFrequency(obj = Item()):
-    global dir_name1
-    path = SetUpPath()
-    if os.path.exists(path+"\\"+dir_name1+"\\"+obj.getName()):
-        file = open(path+"\\"+dir_name1+"\\"+obj.getName(),"r+")
-        content = file.readlines()
-        if len(content) == 9:
-            sum = 0
-            for num in content:
-                sum+=num
-            sum = round(sum/10)
-            file.seek(0,0)
-            file.write(sum+"\n")
-            file.close()
-            obj.setFrq(sum)
-        else:
-            file.seek(2,0)
-            file.write(obj.retFreq()+"/n")
-            file.close()
-    else:
-        file = open(path+"\\"+dir_name1+"\\"+obj.getName(),"w")
-        file.write(obj.retFreq()+"/n")
-        file.close()
-
-    return obj
-
-#CollisionMechanism
-def checkCollision(obj = Item(),content = []):
-    for line in content:
-        if obj.getName() == line[18:len(line)]:
-            return 1
-        else: pass
-    return 0
-def CollissionMechanism(line = "",obj = Item()):
-    print("A collision has occured\n"+ line + obj.return_line() +"\nDo you want to replace?\n(y/n)\n")
-    while 1:
-        inp = input()
-        if inp == "Y" or inp == "y":
-            print("Do you want to recalculate frequency?\n(y/n)\n")
-            inp = input()
-            while 1:
-                if inp == "Y" or inp == "y":
-                    obj = recalculateFrequency(obj)
-                    return obj.return_line()
-                elif inp == "N" or inp == "n":
-                    obj.setIdManually(line[:3])
-                    obj.setFrq(int(line[4:6]))
-                    return obj.return_line()
-                else:
-                    pass
-        elif inp == "N" or inp == "n":
-            return -1
-        else:
-            pass
-#Save_to_date
-#Save a Worry
-def saveWorry(path = "",obj = Item()):
-    global txt_name
-    global one_time
-
-    file = None
-    content = []
-    if obj.getOt():
-        #if is one time worry open the appropriate file
-        file = open(path+one_time,"r+")
-    else:
-        file = open(path+txt_name,"r+")
-
-    for i in range(0,2):
-        content.append(file.readline())
-
-    #1st time in worry file...no worries exist
-    try:
-        next_line = content[1]
-    except:
-        print("malakeia sou")
-        file.seek(0,2)
-        file.write(obj.return_line())
-        file.close()
-        saveToDate(path,obj)
-        return
-
-    while 1:
-        #the idl doesnt exist
-        if next_line == "":
-            file.write(obj.return_line())
-            file.close()
-            break
-        #Object's idl in this category
-        elif next_line[0] == obj.getDigit():
-
-            for i in range(0,int(next_line[1:3])+1):
-                temp_content = []
-                temp_content.append(file.readline())
-
-            temp_content.insert(0,next_line)
-            seeker = checkCollision(obj,temp_content)
-
-            if seeker == 0:
-                pass
-            #Giati uparxei auto edw????? o.O
-            #elif seeker == -1:
-            #    print("Worry isn\'t going to be saved.\n")
-            #    return None
-
-            else:
-                #if there is a collission
-                temp_content[seeker] = CollisionMechanism(temp_content[seeker], obj)
-                seeker = format_Seeker(content)
-                temp_content+=file.readlines()
-                file.seek(seeker,0)
-                for i in range(0,len(temp_content)):
-                    file.write(temp_content[i])
-                file.close()
-                break
-
-            #NoCollissionHasOccured
-            obj.addGap(int(next_line[1:3]))
-            seeker = format_Seeker(content)
-            temp_content.insert(0,obj.return_line())
-            temp_content+=file.readlines()
-            file.seek(seeker,0)
-            for i in range(0,len(temp_content)):
-                file.write(temp_content[i])
-            file.close()
-            break
-
-        elif int(next_line[0]) > int(obj.getDigit()):
-            content.append(next_line)
-            for i in range(0,int(next_line[1:3])):
-                content+=file.readline()
-            next_line = file.readline()
-
-        else:
-            #digit is greater ,obj has to be saved here
-            next_line = file.readline()
-            if next_line == "":
-                pass
-            else:
-                seeker = format_Seeker(content)
-                temp_content = file.readlines()
-                temp_content.insert(0,obj.return_line())
-                file.seek(seeker,0)
-                for i in range(0,len(temp_content)):
-                    file.write(temp_content[i])
-                    file.close()
-                break
-
-    saveToDate(path,obj)
-
-#if there are to no worries 4 today
-def No_Worries_4_Today(path = ""):
-    print("You have no worries for today\n")
-    print("Do you want to add some?\n(y/n)\n")
-    inp = input()
-    if inp == "Y" or inp == "y":
-        print("Is this worry for one time?\n(y/n)\n")
-        while 1:
-            inp = input()
-            if inp == "y" or inp == "Y":
-                saveWorry(path ,crt_obj_using_cmd(2))
-                break
-            elif inp == "n" or inp == "N":
-                saveWorry(path ,crt_obj_using_cmd())
-                break
-            else:
-                continue
-    else:
-        pass
-
-#A worry is done
-def worry_done(path = "",content = [],num = 0):
-    global dir_name2
-
-    paths = [path + txt_name, path + dir_name2 + "\\" + str(datetime.date.today()) + ".txt" ]
-    entry = content.pop(num)
-    entry = entry[:3]
-
-    j = 0
-    while j < 2:
-        #1 update from worries txt
-        #2 Delete from today file
-        file = open(paths[j],"r+")
-        txt_content = file.readlines()
-        for i in range(1,len(txt_content)):
-            if int(entry[0]) > int(txt_content[i][0]):
-                gap = int(txt_content[i][1:3])
-                i+=gap
-            elif int(entry) == int(txt_content[i][:3]):
-                seeker = format_Seeker(txt_content[:i])
-                file.seek(seeker,0)
-                if j == 0 :
-                    txt_content[i] = next_date(txt_content[i])
-                    txt_content = txt_content[i:]
-                else:
-                    txt_content = txt_content[i+1:]
-                    for line in content :
-                        file.write(line)
-                        break
-            else:
-                pass
-
-        file.close()
-        j+=1
-
-    return content
-
-def find_by_idl(path = "",content = []):
-    global txt_name
-
-    file = open(path+txt_name,"r+")
-    fcontent = file.readlines()
-    fcontent.pop(0)
-    file.close()
-
-    if isinstance(content,str):
-        indx = 0
-        while indx < len(fcontent):
-
-            if content[0] == fcontent[indx][0]:
-                gap = int(content[1:3])
-                return fcontent.pop(indx+gap)
-            else:
-                indx+=int(fcontent[indx][1:3])
-
-    else:
-        indx = 0
-        for i in range(0,len(content) ):
-            while 1:
-                line = content[i]
-                if fcontent[indx][0] == line[0]:
-                    #add gap or not?
-                    if fcontent[indx][1:3] == line[1:3]:
-                        content[i] = fcontent[indx]
-                        indx += 1
-                        break
-                    #content[][1:3] < line[1:3]
-                    else:
-                        indx += int(content[indx][1:3]) - int(line[1:3])
-                #content[][0] < line[0]
-                else:
-                    indx += int(content[indx][1:3]) + 1
-
-        return content
-
-def main():
-    global path_var
-    global first_line1
-    global txt_name
-    global dir_name1
-    global dir_name2
-    global one_time
-
-    #create temporary path
-    path_var = SetUpPath()
-    today_content = []
-
-    while 1:
-        if os.path.exists(path_var+txt_name):
-            today_content = Return_Today(path_var+dir_name2)
-        else:
-            #1st time using the program
-            Program_SetUp(path_var)
-
-        if len(today_content) == 0:
-            No_Worries_4_Today(path_var)
-            continue
-        else:
-            today_content = find_by_idl(path_var,today_content)
-            i = 0
-            for line in today_content:
-                i+=1
-                print(str(i)+") "+line)
-
-            while 1:
-                try:
-                    print("*"*5+" Main Menu "+"*"*5+"\n1) Add worries.\n2) Worry done.\n3)Close.\n")
-                    #Main Menu
-                    inp = int(input())
-                    #Add worries
-                    if inp == 1:
-                        print("Is this worry for one time?\n(y/n)\n")
-                        inp = input()
-                        while 1 :
-                            obj = None
-                            if inp == "Y" or inp == "y":
-                                obj = crt_obj_using_cmd(2)
-                                break
-                            elif inp == "n" or inp == "N":
-                                obj = crt_obj_using_cmd()
-                                break
-                            else:
-                                continue
-                        saveWorry(path_var,obj)
-                    #A worry is done
-                    elif inp == 2:
-                        print("Number what worry?\n")
-                        while 1:
-                            try:
-                                inp = int(input())
-                                today_content = worry_done(path_var,today_content,inp)
-                                break
-                            except:
-                                print("Wrong value.\nAre you sure you have a worry done?\n(y/n)\n")
-                                inp = input()
-                                if inp == "y" or inp == "Y":
-                                    continue
-                                else:
-                                    print("No worries done!\n")
-                                    break
-
-                    else:
-                        pass
-                except:
-                    print("Xazoulhs\n")
-                    break
+            return False
+    def return_basic_string(self):
+        return self._id + " " + self._tb + " " + self._lt + " " + self.fr + " " + self._name +'\n'
